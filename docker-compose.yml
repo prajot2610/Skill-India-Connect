@@ -16,7 +16,7 @@ services:
       - PG_PASSWORD=postgres
       - PG_PORT=5432
       - JWT_SECRET=supersecretjwtkey_for_academic_project
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_api_key_here}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-your_openrouter_api_key_here}
     depends_on:
       - mongodb
       - postgresdb
