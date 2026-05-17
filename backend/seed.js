@@ -1,4 +1,6 @@
 require('dotenv').config();
+const crypto = require('crypto');
+global.crypto = crypto;
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const User = require('./models/User');
