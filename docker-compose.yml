@@ -6,6 +6,7 @@ services:
     container_name: skillindia_backend
     ports:
       - "5000:5000"
+    command: sh -c "node seed.js && node server.js"
     environment:
       - PORT=5000
       - MONGO_URI=mongodb://mongodb:27017/skillindiaconnect
@@ -15,7 +16,7 @@ services:
       - PG_PASSWORD=postgres
       - PG_PORT=5432
       - JWT_SECRET=supersecretjwtkey_for_academic_project
-      - OPENAI_API_KEY=your_openai_api_key_here
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_api_key_here}
     depends_on:
       - mongodb
       - postgresdb

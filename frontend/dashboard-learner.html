@@ -155,7 +155,7 @@
 
     async function enrollCourse(courseId) {
       try {
-        await API.post(\`/courses/\${courseId}/enroll\`);
+        await API.post(`/courses/${courseId}/enroll`);
         alert('Successfully enrolled!');
         loadEnrolledCourses(); // Refresh my courses
       } catch (err) {

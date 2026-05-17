@@ -12,8 +12,14 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to Database for seeding...');
 
+    // Check if database already has data
+    const userCount = await User.countDocuments();
+    if (userCount > 0) {
+      console.log('Database already contains users. Skipping seed to preserve existing records.');
+      process.exit(0);
+    }
+
     // Clear existing data
-    await User.deleteMany();
     await Course.deleteMany();
     await Job.deleteMany();
     await Application.deleteMany();

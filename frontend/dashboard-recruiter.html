@@ -21,7 +21,7 @@
   <div class="dashboard-layout">
     <aside class="sidebar">
       <ul class="sidebar-menu">
-        <li><a href="#" class="active">My Posted Jobs</a></li>
+        <li><a href="#" class="active" id="menu-view-jobs">My Posted Jobs</a></li>
         <li><a href="#" id="menu-post-job">Post a Job</a></li>
       </ul>
     </aside>
@@ -62,6 +62,16 @@
         </div>
       </div>
 
+      <div id="view-applications" class="hidden">
+        <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
+          <h2 class="section-title" style="margin-bottom: 0;" id="apps-job-title">Applications</h2>
+          <button id="btn-back-to-jobs" class="btn btn-outline">Back to Jobs</button>
+        </div>
+        <div id="apps-container" class="grid">
+          <p>Loading applications...</p>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -84,15 +94,36 @@
 
     const viewJobs = document.getElementById('view-jobs');
     const postJob = document.getElementById('post-job');
+    const viewApplicationsSection = document.getElementById('view-applications');
+    
+    const menuViewJobs = document.getElementById('menu-view-jobs');
+    const menuPostJob = document.getElementById('menu-post-job');
 
-    document.getElementById('menu-post-job').addEventListener('click', () => {
+    function showSection(section) {
       viewJobs.classList.add('hidden');
-      postJob.classList.remove('hidden');
+      postJob.classList.add('hidden');
+      viewApplicationsSection.classList.add('hidden');
+      section.classList.remove('hidden');
+    }
+
+    menuViewJobs.addEventListener('click', (e) => {
+      e.preventDefault();
+      menuViewJobs.classList.add('active');
+      menuPostJob.classList.remove('active');
+      showSection(viewJobs);
+    });
+
+    menuPostJob.addEventListener('click', (e) => {
+      e.preventDefault();
+      menuPostJob.classList.add('active');
+      menuViewJobs.classList.remove('active');
+      showSection(postJob);
     });
 
     document.getElementById('btn-show-post').addEventListener('click', () => {
-      viewJobs.classList.add('hidden');
-      postJob.classList.remove('hidden');
+      menuPostJob.classList.add('active');
+      menuViewJobs.classList.remove('active');
+      showSection(postJob);
     });
 
     async function loadJobs() {
@@ -141,8 +172,42 @@
       }
     });
 
+    document.getElementById('btn-back-to-jobs').addEventListener('click', () => {
+      showSection(viewJobs);
+      menuViewJobs.classList.add('active');
+      menuPostJob.classList.remove('active');
+    });
+
     async function viewApplications(jobId) {
-      alert(`Viewing applications for job ${jobId} (Implement modal/page)`);
+      showSection(viewApplicationsSection);
+      
+      const container = document.getElementById('apps-container');
+      container.innerHTML = '<p>Loading applications...</p>';
+      
+      try {
+        const apps = await API.get(`/applications/job/${jobId}`);
+        if (apps.length === 0) {
+          container.innerHTML = '<p>No applications received for this job yet.</p>';
+          return;
+        }
+
+        container.innerHTML = apps.map(app => `
+          <div class="card">
+            <h3 style="margin-bottom: 0.5rem;">${app.applicant.name}</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">${app.applicant.email}</p>
+            <p><strong>Skills:</strong> ${app.applicant.skills.length > 0 ? app.applicant.skills.join(', ') : 'Not specified'}</p>
+            <div style="background-color: #f8fafc; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+              <p style="font-size: 0.875rem; margin: 0;"><strong>Cover Letter:</strong></p>
+              <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">${app.coverLetter || 'No cover letter provided.'}</p>
+            </div>
+            <div class="flex" style="gap: 1rem; margin-top: 1rem;">
+              <span class="badge">Status: ${app.status}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<p style="color: red;">Error loading applications: ${err.message}</p>`;
+      }
     }
 
     loadJobs();
