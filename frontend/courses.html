@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses - Skill India Connect</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">Skill India Connect</a>
+    <div class="nav-links">
+      <a href="courses.html" class="active">Courses</a>
+      <a href="jobs.html">Jobs</a>
+      <a href="login.html" class="btn btn-outline" id="nav-login">Login</a>
+      <a href="register.html" class="btn btn-primary" id="nav-register">Register</a>
+      <a href="#" class="btn btn-primary hidden" id="nav-dashboard">Dashboard</a>
+      <a href="#" class="btn btn-outline hidden" id="nav-logout">Logout</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h2 class="section-title">Explore Courses</h2>
+
+    <div id="courses-container" class="grid">
+      <p>Loading courses...</p>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    async function loadCourses() {
+      const container = document.getElementById('courses-container');
+      try {
+        const courses = await API.get('/courses');
+        if (courses.length === 0) {
+          container.innerHTML = '<p>No courses found.</p>';
+          return;
+        }
+
+        container.innerHTML = courses.map(course => `
+          <div class="card">
+            <h3>${course.title}</h3>
+            <span class="badge mb-4">${course.category}</span>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">${course.description}</p>
+            <div class="flex justify-between items-center mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+              <span style="font-weight: 500;">₹${course.price}</span>
+              <span style="color: var(--text-muted); font-size: 0.875rem;">${course.duration}</span>
+            </div>
+            <button class="btn btn-outline mt-4" style="width: 100%;" onclick="enrollCourse('${course._id}')">Enroll Now</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading courses.</p>';
+      }
+    }
+
+    async function enrollCourse(courseId) {
+      if (!Auth.isAuthenticated()) {
+        alert('Please login to enroll in courses.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const user = Auth.getUser();
+      if (user.role !== 'learner') {
+        alert('Only learners can enroll in courses.');
+        return;
+      }
+
+      try {
+        await API.post(`/courses/${courseId}/enroll`);
+        alert('Successfully enrolled!');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    loadCourses();
+  </script>
+</body>
+</html>

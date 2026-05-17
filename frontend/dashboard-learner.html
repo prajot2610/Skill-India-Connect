@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learner Dashboard - Skill India Connect</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">Skill India Connect</a>
+    <div class="nav-links">
+      <span id="user-greeting" style="font-weight: 500; margin-right: 1rem;"></span>
+      <a href="#" class="btn btn-outline" id="nav-logout">Logout</a>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <ul class="sidebar-menu">
+        <li><a href="#" class="active" id="menu-dashboard">My Applications</a></li>
+        <li><a href="#" id="menu-courses">My Courses</a></li>
+        <li><a href="#" id="menu-find-courses">Find Courses</a></li>
+        <li><a href="#" id="menu-find-jobs">Find Jobs</a></li>
+        <li><a href="#" id="menu-ai">AI Recommendations</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-content">
+      <div id="applications-section">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 2rem;">My Applications</h2>
+        <div id="applications-container" class="grid">
+          <p>Loading applications...</p>
+        </div>
+      </div>
+
+      <div id="my-courses-section" class="hidden">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 2rem;">My Registered Courses</h2>
+        <div id="my-courses-container" class="grid">
+          <p>Loading courses...</p>
+        </div>
+      </div>
+
+      <div id="find-courses-section" class="hidden">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 2rem;">Explore Courses</h2>
+        <div id="find-courses-container" class="grid">
+          <p>Loading courses...</p>
+        </div>
+      </div>
+
+      <div id="find-jobs-section" class="hidden">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 2rem;">Explore Jobs</h2>
+        <div id="find-jobs-container" class="grid">
+          <p>Loading jobs...</p>
+        </div>
+      </div>
+
+      <div id="ai-section" class="hidden" style="margin-top: 3rem;">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 1rem;">AI Skill Recommendations</h2>
+        <div class="card" style="background: linear-gradient(135deg, #EEF2FF 0%, #ffffff 100%); border-left: 4px solid var(--primary);">
+          <div id="ai-content">
+            <p>Click "Get Recommendations" to see what skills you should learn next based on your profile.</p>
+            <button id="btn-get-ai" class="btn btn-primary mt-4">Get Recommendations</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    if (!Auth.isAuthenticated() || Auth.getUser().role !== 'learner') {
+      window.location.href = 'login.html';
+    }
+
+    const user = Auth.getUser();
+    document.getElementById('user-greeting').textContent = `Hello, ${user.name}`;
+
+    async function loadApplications() {
+      const container = document.getElementById('applications-container');
+      try {
+        const apps = await API.get('/applications/my');
+        if (apps.length === 0) {
+          container.innerHTML = '<p>You haven\'t applied to any jobs yet.</p>';
+          return;
+        }
+
+        container.innerHTML = apps.map(app => `
+          <div class="card">
+            <h3>${app.job.title}</h3>
+            <p style="font-weight: 500;">${app.job.company}</p>
+            <span class="badge" style="margin-top: 1rem;">Status: ${app.status}</span>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading applications.</p>';
+      }
+    }
+
+    async function loadEnrolledCourses() {
+      const container = document.getElementById('my-courses-container');
+      try {
+        const courses = await API.get('/courses/my/enrolled');
+        if (courses.length === 0) {
+          container.innerHTML = '<p>You haven\'t registered for any courses yet.</p>';
+          return;
+        }
+
+        container.innerHTML = courses.map(course => `
+          <div class="card">
+            <h3>${course.title}</h3>
+            <span class="badge mb-4">${course.category}</span>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">${course.description}</p>
+            <div class="flex justify-between items-center mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+              <span style="font-weight: 500;">Duration</span>
+              <span style="color: var(--text-muted); font-size: 0.875rem;">${course.duration}</span>
+            </div>
+            <button class="btn btn-outline mt-4" style="width: 100%;">Continue Learning</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading registered courses.</p>';
+      }
+    }
+
+    async function loadFindCourses() {
+      const container = document.getElementById('find-courses-container');
+      try {
+        const courses = await API.get('/courses');
+        if (courses.length === 0) {
+          container.innerHTML = '<p>No courses found.</p>';
+          return;
+        }
+        container.innerHTML = courses.map(course => `
+          <div class="card">
+            <h3>${course.title}</h3>
+            <span class="badge mb-4">${course.category}</span>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">${course.description}</p>
+            <div class="flex justify-between items-center mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+              <span style="font-weight: 500;">₹${course.price}</span>
+              <span style="color: var(--text-muted); font-size: 0.875rem;">${course.duration}</span>
+            </div>
+            <button class="btn btn-outline mt-4" style="width: 100%;" onclick="enrollCourse('${course._id}')">Enroll Now</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading courses.</p>';
+      }
+    }
+
+    async function enrollCourse(courseId) {
+      try {
+        await API.post(\`/courses/\${courseId}/enroll\`);
+        alert('Successfully enrolled!');
+        loadEnrolledCourses(); // Refresh my courses
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function loadFindJobs() {
+      const container = document.getElementById('find-jobs-container');
+      try {
+        const jobs = await API.get('/jobs');
+        if (jobs.length === 0) {
+          container.innerHTML = '<p>No jobs found.</p>';
+          return;
+        }
+        container.innerHTML = jobs.map(job => `
+          <div class="card">
+            <h3>${job.title}</h3>
+            <p style="font-weight: 500;">${job.company} - ${job.location}</p>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">${job.description.substring(0, 100)}...</p>
+            <button class="btn btn-primary mt-4" style="width: 100%;" onclick="applyJob('${job._id}')">Apply Now</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading jobs.</p>';
+      }
+    }
+
+    async function applyJob(jobId) {
+      try {
+        await API.post('/applications', { jobId, coverLetter: 'Interested in this position.' });
+        alert('Successfully applied!');
+        loadApplications(); // Refresh my applications
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    loadApplications();
+    loadEnrolledCourses();
+    loadFindCourses();
+    loadFindJobs();
+
+    const menuDashboard = document.getElementById('menu-dashboard');
+    const menuCourses = document.getElementById('menu-courses');
+    const menuFindCourses = document.getElementById('menu-find-courses');
+    const menuFindJobs = document.getElementById('menu-find-jobs');
+    
+    const appsSection = document.getElementById('applications-section');
+    const coursesSection = document.getElementById('my-courses-section');
+    const findCoursesSection = document.getElementById('find-courses-section');
+    const findJobsSection = document.getElementById('find-jobs-section');
+
+    function hideAllSections() {
+      appsSection.classList.add('hidden');
+      coursesSection.classList.add('hidden');
+      findCoursesSection.classList.add('hidden');
+      findJobsSection.classList.add('hidden');
+      
+      menuDashboard.classList.remove('active');
+      menuCourses.classList.remove('active');
+      menuFindCourses.classList.remove('active');
+      menuFindJobs.classList.remove('active');
+    }
+
+    menuDashboard.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideAllSections();
+      menuDashboard.classList.add('active');
+      appsSection.classList.remove('hidden');
+    });
+
+    menuCourses.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideAllSections();
+      menuCourses.classList.add('active');
+      coursesSection.classList.remove('hidden');
+    });
+
+    menuFindCourses.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideAllSections();
+      menuFindCourses.classList.add('active');
+      findCoursesSection.classList.remove('hidden');
+    });
+
+    menuFindJobs.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideAllSections();
+      menuFindJobs.classList.add('active');
+      findJobsSection.classList.remove('hidden');
+    });
+
+    document.getElementById('menu-ai').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('ai-section').classList.toggle('hidden');
+    });
+
+    document.getElementById('btn-get-ai').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-get-ai');
+      const content = document.getElementById('ai-content');
+      btn.textContent = 'Loading...';
+      btn.disabled = true;
+
+      try {
+        // Mock current skills for now, could be fetched from profile
+        const skills = ['HTML', 'CSS', 'JavaScript'];
+        const res = await API.post('/ai/recommend', { currentSkills: skills });
+        content.innerHTML = `
+          <h4 style="margin-bottom: 0.5rem; color: var(--primary);">Recommended for you:</h4>
+          <p>${res.recommendation}</p>
+        `;
+      } catch (err) {
+        content.innerHTML = `<p style="color: red;">Failed to load AI recommendations.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

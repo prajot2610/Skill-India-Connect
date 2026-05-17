@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recruiter Dashboard - Skill India Connect</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">Skill India Connect</a>
+    <div class="nav-links">
+      <span id="user-greeting" style="font-weight: 500; margin-right: 1rem;"></span>
+      <a href="#" class="btn btn-outline" id="nav-logout">Logout</a>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <ul class="sidebar-menu">
+        <li><a href="#" class="active">My Posted Jobs</a></li>
+        <li><a href="#" id="menu-post-job">Post a Job</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-content">
+      <div id="view-jobs">
+        <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
+          <h2 class="section-title" style="margin-bottom: 0;">My Jobs</h2>
+          <button id="btn-show-post" class="btn btn-primary">Post New Job</button>
+        </div>
+        <div id="jobs-container" class="grid">
+          <p>Loading jobs...</p>
+        </div>
+      </div>
+
+      <div id="post-job" class="hidden">
+        <h2 class="section-title" style="text-align: left; margin-bottom: 2rem;">Post a New Job</h2>
+        <div class="card">
+          <form id="job-form">
+            <div class="form-group">
+              <label>Job Title</label>
+              <input type="text" id="job-title" required>
+            </div>
+            <div class="form-group">
+              <label>Company Name</label>
+              <input type="text" id="job-company" required>
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="job-location" required>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="job-desc" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Job</button>
+          </form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="notification-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/socket.js"></script>
+  <script>
+    if (!Auth.isAuthenticated() || Auth.getUser().role !== 'recruiter') {
+      window.location.href = 'login.html';
+    }
+
+    const user = Auth.getUser();
+    document.getElementById('user-greeting').textContent = `Hello, ${user.name}`;
+
+    // Initialize Socket Connection for Notifications
+    initSocket(user.id);
+
+    const viewJobs = document.getElementById('view-jobs');
+    const postJob = document.getElementById('post-job');
+
+    document.getElementById('menu-post-job').addEventListener('click', () => {
+      viewJobs.classList.add('hidden');
+      postJob.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-show-post').addEventListener('click', () => {
+      viewJobs.classList.add('hidden');
+      postJob.classList.remove('hidden');
+    });
+
+    async function loadJobs() {
+      const container = document.getElementById('jobs-container');
+      try {
+        const jobs = await API.get('/jobs');
+        // Filter jobs posted by this user (in a real app, do this on backend)
+        const myJobs = jobs.filter(j => j.postedBy._id === user.id);
+        
+        if (myJobs.length === 0) {
+          container.innerHTML = '<p>You haven\'t posted any jobs yet.</p>';
+          return;
+        }
+
+        container.innerHTML = myJobs.map(job => `
+          <div class="card">
+            <h3>${job.title}</h3>
+            <p>${job.location}</p>
+            <button class="btn btn-outline" style="width: 100%; margin-top: 1rem;" onclick="viewApplications('${job._id}')">View Applications</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading jobs.</p>';
+      }
+    }
+
+    document.getElementById('job-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const jobData = {
+        title: document.getElementById('job-title').value,
+        company: document.getElementById('job-company').value,
+        location: document.getElementById('job-location').value,
+        description: document.getElementById('job-desc').value,
+        requirements: []
+      };
+
+      try {
+        await API.post('/jobs', jobData);
+        alert('Job posted successfully!');
+        e.target.reset();
+        postJob.classList.add('hidden');
+        viewJobs.classList.remove('hidden');
+        loadJobs();
+      } catch (err) {
+        alert('Error posting job: ' + err.message);
+      }
+    });
+
+    async function viewApplications(jobId) {
+      alert(`Viewing applications for job ${jobId} (Implement modal/page)`);
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobs - Skill India Connect</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">Skill India Connect</a>
+    <div class="nav-links">
+      <a href="courses.html">Courses</a>
+      <a href="jobs.html" class="active">Jobs</a>
+      <a href="login.html" class="btn btn-outline" id="nav-login">Login</a>
+      <a href="register.html" class="btn btn-primary" id="nav-register">Register</a>
+      <a href="#" class="btn btn-primary hidden" id="nav-dashboard">Dashboard</a>
+      <a href="#" class="btn btn-outline hidden" id="nav-logout">Logout</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="flex justify-between items-center mb-4" style="margin-bottom: 3rem;">
+      <h2 class="section-title" style="margin-bottom: 0;">Explore Jobs</h2>
+    </div>
+
+    <div id="jobs-container" class="grid">
+      <p>Loading jobs...</p>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    async function loadJobs() {
+      const container = document.getElementById('jobs-container');
+      try {
+        const jobs = await API.get('/jobs');
+        if (jobs.length === 0) {
+          container.innerHTML = '<p>No jobs found.</p>';
+          return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+          <div class="card">
+            <h3>${job.title}</h3>
+            <p style="font-weight: 500;">${job.company} - ${job.location}</p>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">${job.description.substring(0, 100)}...</p>
+            <button class="btn btn-primary mt-4" style="width: 100%;" onclick="applyJob('${job._id}')">Apply Now</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<p style="color: red;">Error loading jobs.</p>';
+      }
+    }
+
+    async function applyJob(jobId) {
+      if (!Auth.isAuthenticated()) {
+        alert('Please login to apply for jobs.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const user = Auth.getUser();
+      if (user.role !== 'learner') {
+        alert('Only learners can apply for jobs.');
+        return;
+      }
+
+      try {
+        await API.post('/applications', { jobId, coverLetter: 'Interested in this position.' });
+        alert('Successfully applied!');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>
