@@ -1,6 +1,7 @@
 function initSocket(userId) {
-  // Connect to the Socket.IO server hosted on the backend
-  const socket = io('http://localhost:5000');
+  // Connect to the Socket.IO server hosted on the backend dynamically
+  const socketUrl = typeof API_URL !== 'undefined' ? API_URL.replace('/api', '') : 'http://localhost:5000';
+  const socket = io(socketUrl);
 
   socket.on('connect', () => {
     console.log('Connected to notification server');
