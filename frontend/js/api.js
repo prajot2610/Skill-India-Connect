@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://13.206.255.113:5000/api';
 
 class API {
   static async request(endpoint, options = {}) {
