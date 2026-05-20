@@ -70,6 +70,7 @@
     </main>
   </div>
 
+  <script src="https://js.puter.com/v2/"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
@@ -258,43 +259,44 @@
       document.getElementById('ai-section').classList.remove('hidden');
     });
 
-    document.getElementById('btn-get-ai').addEventListener('click', async () => {
+    async function getAIRecommendations() {
       const btn = document.getElementById('btn-get-ai');
       const content = document.getElementById('ai-content');
       btn.textContent = 'Loading...';
       btn.disabled = true;
 
       try {
-        // Mock current skills for now, could be fetched from profile
-        const skills = ['HTML', 'CSS', 'JavaScript'];
-        const res = await API.post('/ai/recommend', { currentSkills: skills });
+        const skills = user.skills && user.skills.length > 0
+          ? user.skills
+          : ['HTML', 'CSS', 'JavaScript'];
+
+        const prompt = `As a career counselor for the Skill India platform, suggest 3 skills to learn next and a brief learning path based on these current skills: ${skills.join(', ')}. Keep the response under 120 words, use numbered points, and format as plain text.`;
+
+        const response = await puter.ai.chat(prompt, { model: 'gpt-4o-mini' });
+        const responseText = response?.message?.content?.[0]?.text ?? response?.toString() ?? 'No response received.';
 
         // Convert newlines and **bold** to HTML
-        const formatted = res.recommendation
+        const formatted = responseText
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\n/g, '<br>');
-
-        const noteHtml = res.note
-          ? `<p style="font-size:0.8rem; color: var(--text-muted); margin-top:1rem; padding: 0.5rem; background: #fffbe6; border-radius: 6px;">⚠️ ${res.note}</p>`
-          : '';
 
         content.innerHTML = `
           <h4 style="margin-bottom: 0.75rem; color: var(--primary);">Recommended for you:</h4>
           <p style="line-height:1.8;">${formatted}</p>
-          ${noteHtml}
+          <p style="font-size:0.75rem; color: var(--text-muted); margin-top:1rem;">✨ Powered by Puter.js AI</p>
           <button id="btn-get-ai" class="btn btn-outline mt-4">Get New Recommendations</button>
         `;
-
-        // Re-attach click listener to new button
-        document.getElementById('btn-get-ai').addEventListener('click', arguments.callee.bind(this));
+        document.getElementById('btn-get-ai').addEventListener('click', getAIRecommendations);
       } catch (err) {
         content.innerHTML = `
           <p style="color: red; margin-bottom: 1rem;">Failed to load AI recommendations. Please try again.</p>
           <button id="btn-get-ai" class="btn btn-outline">Retry</button>
         `;
-        document.getElementById('btn-get-ai').addEventListener('click', arguments.callee.bind(this));
+        document.getElementById('btn-get-ai').addEventListener('click', getAIRecommendations);
       }
-    });
+    }
+
+    document.getElementById('btn-get-ai').addEventListener('click', getAIRecommendations);
   </script>
 </body>
 </html>
