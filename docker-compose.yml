@@ -23,7 +23,7 @@ services:
       - skillindia_network
 
   mongodb:
-    image: mongo:latest
+    image: mongo:4.4
     container_name: skillindia_mongo
     ports:
       - "27017:27017"
