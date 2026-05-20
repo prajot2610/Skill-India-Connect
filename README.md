@@ -8,7 +8,7 @@
 
 > **Skill India Connect** is a highly polished, enterprise-grade full-stack web application developed for advanced web systems training. It bridges the gap between learners, recruiters, and educational resources by combining real-time collaboration tools, modern glassmorphic designs, and browser-driven AI talent recommendations with dual-database persistence.
 
-🌐 **AWS Deployed Live API Endpoint:** [http://13.206.255.113:5000](http://13.206.255.113:5000)
+🌐 **AWS Deployed Live API Endpoint:** [http://13.206.255.113/](http://13.206.255.113/)
 
 ---
 
