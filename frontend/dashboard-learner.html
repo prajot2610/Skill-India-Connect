@@ -266,6 +266,12 @@
       btn.disabled = true;
 
       try {
+        // Ensure user is signed into Puter — triggers sign-in popup if needed
+        if (!puter.auth.isSignedIn()) {
+          content.innerHTML = `<p style="color: var(--text-muted);">🔐 Signing into Puter AI... please complete the sign-in popup.</p>`;
+          await puter.auth.signIn();
+        }
+
         const skills = user.skills && user.skills.length > 0
           ? user.skills
           : ['HTML', 'CSS', 'JavaScript'];
@@ -287,9 +293,18 @@
           <button id="btn-get-ai" class="btn btn-outline mt-4">Get New Recommendations</button>
         `;
         document.getElementById('btn-get-ai').addEventListener('click', getAIRecommendations);
+
       } catch (err) {
+        console.error('Puter AI error:', err);
+        const isAuthErr = err?.message?.toLowerCase().includes('auth') ||
+                          err?.message?.toLowerCase().includes('unauthorized') ||
+                          err?.message?.toLowerCase().includes('sign');
         content.innerHTML = `
-          <p style="color: red; margin-bottom: 1rem;">Failed to load AI recommendations. Please try again.</p>
+          <p style="color: red; margin-bottom: 0.5rem;">
+            ${isAuthErr
+              ? '🔐 Sign-in required or was cancelled. Please try again and complete the Puter sign-in.'
+              : '⚠️ Failed to get AI recommendations. Please try again.'}
+          </p>
           <button id="btn-get-ai" class="btn btn-outline">Retry</button>
         `;
         document.getElementById('btn-get-ai').addEventListener('click', getAIRecommendations);
