@@ -264,12 +264,31 @@
         // Mock current skills for now, could be fetched from profile
         const skills = ['HTML', 'CSS', 'JavaScript'];
         const res = await API.post('/ai/recommend', { currentSkills: skills });
+
+        // Convert newlines and **bold** to HTML
+        const formatted = res.recommendation
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>');
+
+        const noteHtml = res.note
+          ? `<p style="font-size:0.8rem; color: var(--text-muted); margin-top:1rem; padding: 0.5rem; background: #fffbe6; border-radius: 6px;">⚠️ ${res.note}</p>`
+          : '';
+
         content.innerHTML = `
-          <h4 style="margin-bottom: 0.5rem; color: var(--primary);">Recommended for you:</h4>
-          <p>${res.recommendation}</p>
+          <h4 style="margin-bottom: 0.75rem; color: var(--primary);">Recommended for you:</h4>
+          <p style="line-height:1.8;">${formatted}</p>
+          ${noteHtml}
+          <button id="btn-get-ai" class="btn btn-outline mt-4">Get New Recommendations</button>
         `;
+
+        // Re-attach click listener to new button
+        document.getElementById('btn-get-ai').addEventListener('click', arguments.callee.bind(this));
       } catch (err) {
-        content.innerHTML = `<p style="color: red;">Failed to load AI recommendations.</p>`;
+        content.innerHTML = `
+          <p style="color: red; margin-bottom: 1rem;">Failed to load AI recommendations. Please try again.</p>
+          <button id="btn-get-ai" class="btn btn-outline">Retry</button>
+        `;
+        document.getElementById('btn-get-ai').addEventListener('click', arguments.callee.bind(this));
       }
     });
   </script>

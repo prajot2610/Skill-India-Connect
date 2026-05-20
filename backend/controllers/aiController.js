@@ -1,4 +1,11 @@
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const MOCK_RECOMMENDATION = (skills) =>
+  `Based on your skills in ${skills.join(', ')}, here are 3 recommended next steps:\n\n` +
+  `1. **React.js** – Build dynamic user interfaces and SPAs.\n` +
+  `2. **Node.js & Express** – Develop scalable REST APIs.\n` +
+  `3. **Cloud Computing (AWS/GCP)** – Deploy and manage applications at scale.\n\n` +
+  `Learning Path: Start with React fundamentals → Build a full-stack project → Deploy to cloud.`;
 
 const getSkillRecommendations = async (req, res) => {
   try {
@@ -8,31 +15,32 @@ const getSkillRecommendations = async (req, res) => {
       return res.status(400).json({ message: 'Please provide current skills' });
     }
 
-    // Only instantiate Gemini if key is present to prevent crashes if user hasn't set it yet.
+    // Fall back to mock if no API key configured
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
-       // Mock response for academic/demo purposes if key is missing
-       return res.json({
-         recommendation: "Since no Gemini key is configured, here is a mock recommendation: Based on your skills in " + currentSkills.join(", ") + ", we suggest learning React, Node.js, and Cloud Computing. Learning Path: 1. Build a basic frontend. 2. Create REST APIs. 3. Deploy to AWS."
-       });
+      return res.json({ recommendation: MOCK_RECOMMENDATION(currentSkills) });
     }
 
-    const openai = new OpenAI({
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `As a career counselor, suggest 3 skills to learn next and a brief learning path based on these current skills: ${currentSkills.join(', ')}. Keep the response under 100 words and format as plain text.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gemini-1.5-flash",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 150,
-    });
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
 
-    res.json({
-      recommendation: response.choices[0].message.content,
-    });
+    res.json({ recommendation: responseText });
+
   } catch (error) {
+    // Gracefully handle quota exceeded (429) — return mock so the UI still works
+    if (error.message && (error.message.includes('429') || error.message.includes('quota') || error.message.includes('Too Many Requests'))) {
+      console.warn('Gemini API quota exceeded. Returning mock recommendation.');
+      return res.json({
+        recommendation: MOCK_RECOMMENDATION(req.body.currentSkills || ['your skills']),
+        note: 'Live AI temporarily unavailable (quota limit reached). Showing sample recommendation.'
+      });
+    }
+
+    console.error('AI Error:', error.message);
     res.status(500).json({ message: 'Error getting recommendations: ' + error.message });
   }
 };
