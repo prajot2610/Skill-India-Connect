@@ -10,3 +10,9 @@ yarn-error.log*
 .idea/
 .vscode/
 *.log
+
+# Test / debug scripts
+test_models.js
+test_ai.js
+models.json
+package-lock.json

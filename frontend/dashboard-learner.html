@@ -214,11 +214,13 @@
       coursesSection.classList.add('hidden');
       findCoursesSection.classList.add('hidden');
       findJobsSection.classList.add('hidden');
-      
+      document.getElementById('ai-section').classList.add('hidden');
+
       menuDashboard.classList.remove('active');
       menuCourses.classList.remove('active');
       menuFindCourses.classList.remove('active');
       menuFindJobs.classList.remove('active');
+      document.getElementById('menu-ai').classList.remove('active');
     }
 
     menuDashboard.addEventListener('click', (e) => {
@@ -251,7 +253,9 @@
 
     document.getElementById('menu-ai').addEventListener('click', (e) => {
       e.preventDefault();
-      document.getElementById('ai-section').classList.toggle('hidden');
+      hideAllSections();
+      document.getElementById('menu-ai').classList.add('active');
+      document.getElementById('ai-section').classList.remove('hidden');
     });
 
     document.getElementById('btn-get-ai').addEventListener('click', async () => {
